@@ -1,0 +1,1 @@
+FIXED. Confirm that the ers_ais_big finds vessels with only one gear regsitered. Not multiple gear. think they plot all now. 
