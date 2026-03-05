@@ -159,6 +159,10 @@ def downsample(df, step):
 
     df["datetime"] = pd.to_datetime(df["timestamp"], unit="s")
     df = df.sort_values(["trajectory_id", "datetime"]).set_index("datetime")
+    
+    theta = np.deg2rad(df["course"].astype(float))
+    df["cog_x"] = np.cos(theta)
+    df["cog_y"] = np.sin(theta)
 
     def resample_and_interpolate(g):
         traj = g.name  # <-- this group's trajectory_id string
@@ -166,9 +170,13 @@ def downsample(df, step):
         g_res = g.resample(step, origin=g.index.min()).first()
 
         # Interpolate only continuous signals that exist
-        interp_cols = [c for c in ["lon", "lat", "speed"] if c in g_res.columns]
+        interp_cols = [c for c in ["lon", "lat", "speed", "cog_x", "cog_y"] if c in g_res.columns]
         if interp_cols:
             g_res[interp_cols] = g_res[interp_cols].interpolate("time", limit_area="inside")
+        
+        r = np.hypot(g_res["cog_x"], g_res["cog_y"])
+        g_res["cog_x"] = g_res["cog_x"] / r
+        g_res["cog_y"] = g_res["cog_y"] / r
 
         # Fill identifiers that exist
         id_cols = [c for c in ["mmsi", "source"] if c in g_res.columns]
@@ -198,6 +206,34 @@ def downsample(df, step):
 
     return resampled
 
+def reindex_trajectory_ids(df):
+    print("Reindexing trajectory IDs")
+
+    df = df.sort_values(["mmsi", "datetime"])
+
+    out = []
+    for mmsi, g in df.groupby("mmsi", sort=False):
+        # extract numeric suffix from old trajectory_id
+        old = g["trajectory_id"].astype(str)
+        old_num = old.str.rsplit("-", n=1).str[-1].astype(int)
+
+        # get unique old IDs in numeric order
+        order = (
+            pd.DataFrame({"old": old, "num": old_num})
+              .drop_duplicates("old")
+              .sort_values("num")["old"]
+              .tolist()
+        )
+
+        mapping = {oid: i for i, oid in enumerate(order)}
+        newnum = old.map(mapping)
+
+        g = g.copy()
+        g["trajectory_id"] = g["mmsi"].astype(str) + "-" + newnum.astype(int).astype(str)
+        out.append(g)
+
+    return pd.concat(out, ignore_index=True)
+
 def main():
     df = pd.read_csv("Data/gfw/trawlers.csv")
     print(df.shape)
@@ -219,6 +255,7 @@ def main():
     df = extract_trajectories(df)
     df = remove_outlier_positions(df)
     df = remove_short_trajectories(df)
+    df = reindex_trajectory_ids(df)
     print(df.shape)
     fishing = df.loc[df["is_fishing"] >= 0.5]
     print(fishing.shape)
@@ -226,6 +263,8 @@ def main():
     fishing = df.loc[df["is_fishing"] >= 0.5]
     print(df.shape)
     print(fishing.shape)
+
+    df.to_csv("gfw_trawlers_cog.csv", index=False)
 
     # Keep only trajectory_ids that contain fishing
     traj_with_fishing = (
