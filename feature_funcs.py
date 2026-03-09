@@ -24,6 +24,9 @@ def haversine(lat1, lon1, lat2, lon2, dt):
 
     return dist, speed
 
+def angle_wrap(a):
+    return (a + 180) % 360 - 180
+
 def accel(s1, s2, dt):
     return (s2 - s1) / dt
 
@@ -36,3 +39,5 @@ def dcourse(cog1, cog2, dt):
 
 if __name__ == "__main__":
     print("yo")
+    #df["del_cog"] = df["del_cog"].apply(angle_wrap)
+    

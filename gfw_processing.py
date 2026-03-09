@@ -177,6 +177,8 @@ def downsample(df, step):
         r = np.hypot(g_res["cog_x"], g_res["cog_y"])
         g_res["cog_x"] = g_res["cog_x"] / r
         g_res["cog_y"] = g_res["cog_y"] / r
+        g_res["theta"] = np.arctan2(g_res["cog_y"], g_res["cog_x"])
+        g_res["cog_interp"] = np.rad2deg(g_res["theta"]) % 360
 
         # Fill identifiers that exist
         id_cols = [c for c in ["mmsi", "source"] if c in g_res.columns]
@@ -204,6 +206,7 @@ def downsample(df, step):
     resampled["trajectory_id"] = resampled["trajectory_id"].astype("string")
     resampled["mmsi"] = resampled["mmsi"].astype("int64")
 
+    resampled = resampled.drop(columns=["timestamp", "distance_from_shore", "distance_from_port", "course", "cog_x", "cog_y", "theta"])
     return resampled
 
 def reindex_trajectory_ids(df):
@@ -261,8 +264,8 @@ def main():
     print(fishing.shape)
     df = downsample(df, step="10min")
     fishing = df.loc[df["is_fishing"] >= 0.5]
-    print(df.shape)
-    print(fishing.shape)
+    print(df.head())
+    #print(fishing.shape)
 
     df.to_csv("gfw_trawlers_cog.csv", index=False)
 

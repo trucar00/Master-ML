@@ -1,8 +1,9 @@
 import pandas as pd
 import feature_funcs as ff
 
-df = pd.read_csv("gfw_trawlers.csv")
-df = df.drop(columns=["timestamp"])
+# READY FOR CREATING SEGMENTS
+
+df = pd.read_csv("Data/gfw/gfw_trawlers_cog.csv")
 df["datetime"] = pd.to_datetime(df["datetime"])
 df["traj_num"] = df["trajectory_id"].astype(str).str.rsplit("-", n=1).str[-1].astype(int)
 
@@ -17,13 +18,12 @@ steam_segs = 0
 no_label = 0
 
 feature_df = pd.DataFrame(columns=["mmsi", "datetime", "dist_to_prev", "jerk", "speed",])
-feature_df
+#feature_df
 
 for traj, d in df.groupby("trajectory_id", sort=False):
     d = d.sort_values("datetime").reset_index(drop=True)
     start_idx = 0
     end_idx = nr_points
-
 
 
     while end_idx <= len(d):
