@@ -25,7 +25,7 @@ def haversine(lat1, lon1, lat2, lon2):
     return dist #, speed
 
 def speed(dist, dt):
-    return (dist/dt) * 1.94384
+    return (dist/dt) # m/s
 
 def angle_wrap(a):
     return (a + 180) % 360 - 180

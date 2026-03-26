@@ -257,7 +257,7 @@ def main():
     df = remove_duplicate_timestamps(df)
     df = extract_trajectories(df)
     df = remove_outlier_positions(df)
-    df = remove_short_trajectories(df)
+    df = remove_short_trajectories(df) # Removes all trajectories shorter than 2h
     df = reindex_trajectory_ids(df)
     print(df.shape)
     fishing = df.loc[df["is_fishing"] >= 0.5]
