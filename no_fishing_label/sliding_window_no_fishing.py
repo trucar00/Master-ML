@@ -4,7 +4,7 @@ from tqdm import tqdm
 
 # READY FOR CREATING SEGMENTS
 
-df = pd.read_csv("Data/feats_trawl_no_label.csv")
+df = pd.read_csv("Data/feats_traj_not_no_label.csv")
 df["datetime"] = pd.to_datetime(df["datetime"])
 df["traj_num"] = df["trajectory_id"].astype(str).str.rsplit("-", n=1).str[-1].astype(int)
 
@@ -39,4 +39,4 @@ for traj, d in tqdm(df.groupby("trajectory_id", sort=False)):
 features_all = pd.concat(all_feature_dfs, ignore_index=True)
 print(features_all.shape) # fishing + steaming segments * 11 
 
-features_all.to_csv("Data/trawl_segments_no_label.csv", index=False)
+features_all.to_csv("Data/not_segments_no_label.csv", index=False)

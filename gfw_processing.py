@@ -317,7 +317,7 @@ def reindex_trajectory_ids(df):
     return pd.concat(out, ignore_index=True)
 
 def main():
-    df = pd.read_csv("Data/gfw/drifting_longlines.csv")
+    df = pd.read_csv("Data/gfw/purse_seines.csv")
     print(df.shape)
     fishing = df.loc[df["is_fishing"] >= 0.5]
     print(fishing.shape)
@@ -346,7 +346,7 @@ def main():
     print(df.head())
     #print(fishing.shape)
 
-    df.to_csv("longlines_gfw_processed.csv", index=False)
+    df.to_csv("purse_seines_gfw_processed.csv", index=False)
 
     # Keep only trajectory_ids that contain fishing
     traj_with_fishing = (

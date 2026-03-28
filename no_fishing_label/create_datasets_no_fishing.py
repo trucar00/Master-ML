@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-df = pd.read_csv("Data/trawl_segments_no_label.csv")
+df = pd.read_csv("Data/not_segments_no_label.csv")
 
 segments = []
 meta = []
@@ -25,7 +25,7 @@ for seg_id, seg_df in df.groupby("segment_id"):
 
 X = np.array(segments)   # (N, 11, features)
 meta = pd.DataFrame(meta) # index mathes, so if y[0] is predicted as fishibg, i can look up meta[0] to see what trajectory it is. 
-np.save("Data/datasets/X_no_label", X)
-np.save("Data/datasets/meta_no_label", meta)
+np.save("Data/datasets/X_not_no_label", X)
+np.save("Data/datasets/meta_not_no_label", meta)
 
 print(X.shape)
