@@ -1,24 +1,19 @@
 import pandas as pd
 import numpy as np
 
-df = pd.read_csv("Data/feats_traj_segments2.csv")
+df = pd.read_csv("Data/trawl_segments_no_label.csv")
 
 segments = []
-labels = []
 meta = []
-groups = []
 
 for seg_id, seg_df in df.groupby("segment_id"):
     seg_df = seg_df.sort_values("datetime") 
 
-    X_seg = seg_df.drop(columns=["mmsi", "datetime", "trajectory_id", "segment_id", "fishing"]).values
-    y_seg = seg_df["fishing"].iloc[0]
+    X_seg = seg_df.drop(columns=["mmsi", "datetime", "lon", "lat", "trajectory_id", "callsign", "segment_id"]).values
 
     traj_id = seg_df["trajectory_id"].iloc[0]
 
     segments.append(X_seg)
-    labels.append(y_seg)
-    groups.append(traj_id)
 
     meta.append({
         "segment_id": seg_id,
@@ -29,12 +24,8 @@ for seg_id, seg_df in df.groupby("segment_id"):
     })
 
 X = np.array(segments)   # (N, 11, features)
-y = np.array(labels)
-groups = np.array(groups)
 meta = pd.DataFrame(meta) # index mathes, so if y[0] is predicted as fishibg, i can look up meta[0] to see what trajectory it is. 
-np.save("Data/datasets/X2", X)
-np.save("Data/datasets/y2", y)
-np.save("Data/datasets/meta2", meta)
-np.save("Data/datasets/groups2", groups)
+np.save("Data/datasets/X_no_label", X)
+np.save("Data/datasets/meta_no_label", meta)
 
-print(X.shape, y.shape)
+print(X.shape)

@@ -209,6 +209,85 @@ def downsample(df, step):
     resampled = resampled.drop(columns=["timestamp", "distance_from_shore", "distance_from_port", "course", "cog_x", "cog_y", "theta"])
     return resampled
 
+def downsample2(df, step):
+    df = df.copy()
+
+    df["datetime"] = pd.to_datetime(df["timestamp"], unit="s")
+    df = df.sort_values(["trajectory_id", "datetime"]).set_index("datetime")
+    
+    theta = np.deg2rad(df["course"].astype(float))
+    df["cog_x"] = np.cos(theta)
+    df["cog_y"] = np.sin(theta)
+
+    def resample_and_interpolate(g):
+        traj = g.name  # <-- this group's trajectory_id string
+
+         # regular grid from first to last timestamp of this trajectory
+        regular_index = pd.date_range(
+            start=g.index.min(),
+            end=g.index.max(),
+            freq=step
+        )
+
+        # union original timestamps + target grid, so interpolation uses real points
+        g_union = g.reindex(g.index.union(regular_index)).sort_index()
+
+        # linear spatial interpolation in time
+        interp_cols = [c for c in ["lon", "lat"] if c in g_union.columns]
+        g_union[interp_cols] = g_union[interp_cols].interpolate(
+            method="time",
+            limit_area="inside"
+        )
+
+        # optional interpolation of speed and course representation
+        # speed is not essential here since you later recompute speed from position,
+        # but keeping it can be useful for diagnostics
+        extra_interp_cols = [c for c in ["speed", "cog_x", "cog_y"] if c in g_union.columns]
+        g_union[extra_interp_cols] = g_union[extra_interp_cols].interpolate(
+            method="time",
+            limit_area="inside"
+        )
+
+        # keep only the regular timestamps
+        g_res = g_union.loc[regular_index].copy()
+        
+        r = np.hypot(g_res["cog_x"], g_res["cog_y"])
+        g_res["cog_x"] = g_res["cog_x"] / r
+        g_res["cog_y"] = g_res["cog_y"] / r
+        g_res["theta"] = np.arctan2(g_res["cog_y"], g_res["cog_x"])
+        g_res["cog_interp"] = np.rad2deg(g_res["theta"]) % 360
+
+        # Fill identifiers that exist
+        id_cols = [c for c in ["mmsi", "source"] if c in g_res.columns]
+        if id_cols:
+            g_res[id_cols] = g_res[id_cols].ffill()
+
+       
+        lab = g[["is_fishing"]].copy()
+        lab = lab[~lab.index.duplicated(keep="first")]
+        g_res["is_fishing"] = (
+            lab.reindex(regular_index, method="nearest")["is_fishing"].values
+        )
+
+        # Re-add trajectory_id as a string column
+        g_res["trajectory_id"] = traj
+
+        return g_res
+
+    resampled = (
+        df.groupby("trajectory_id", group_keys=False)
+          .apply(resample_and_interpolate)
+          .reset_index()
+          .rename(columns={"index": "datetime"})
+    )
+
+    # Ensure trajectory_id is string dtype
+    resampled["trajectory_id"] = resampled["trajectory_id"].astype("string")
+    resampled["mmsi"] = resampled["mmsi"].astype("int64")
+
+    resampled = resampled.drop(columns=["timestamp", "distance_from_shore", "distance_from_port", "course", "cog_x", "cog_y", "theta"])
+    return resampled
+
 def reindex_trajectory_ids(df):
     print("Reindexing trajectory IDs")
 
@@ -238,7 +317,7 @@ def reindex_trajectory_ids(df):
     return pd.concat(out, ignore_index=True)
 
 def main():
-    df = pd.read_csv("Data/gfw/trawlers.csv")
+    df = pd.read_csv("Data/gfw/drifting_longlines.csv")
     print(df.shape)
     fishing = df.loc[df["is_fishing"] >= 0.5]
     print(fishing.shape)
@@ -262,12 +341,12 @@ def main():
     print(df.shape)
     fishing = df.loc[df["is_fishing"] >= 0.5]
     print(fishing.shape)
-    df = downsample(df, step="10min")
+    df = downsample2(df, step="10min")
     fishing = df.loc[df["is_fishing"] >= 0.5]
     print(df.head())
     #print(fishing.shape)
 
-    df.to_csv("gfw_trawlers_cog.csv", index=False)
+    df.to_csv("longlines_gfw_processed.csv", index=False)
 
     # Keep only trajectory_ids that contain fishing
     traj_with_fishing = (

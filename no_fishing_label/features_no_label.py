@@ -3,7 +3,7 @@ import feature_funcs as ff
 import numpy as np
 from tqdm import tqdm
 
-df = pd.read_csv("Data/gfw/longlines_gfw_processed.csv")
+df = pd.read_csv("Data/gear_specific/trawl_clean_downsampled10min.csv")
 df["datetime"] = pd.to_datetime(df["datetime"])
 df["traj_num"] = df["trajectory_id"].astype(str).str.rsplit("-", n=1).str[-1].astype(int)
 
@@ -46,4 +46,4 @@ for traj, d in tqdm(df.groupby("trajectory_id", sort=False)):
     
 
 df_with_feats = pd.concat(traj_level_feats)
-df_with_feats.to_csv("Data/feats_traj_level_longlines.csv")
+df_with_feats.to_csv("Data/feats_trawl_no_label.csv", index=False)
