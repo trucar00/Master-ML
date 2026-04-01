@@ -3,18 +3,18 @@ import feature_funcs as ff
 import numpy as np
 from tqdm import tqdm
 
-df = pd.read_csv("Data/gfw/longlines_gfw_processed.csv")
+df = pd.read_csv("Data/gfw/processed/line_trawl_processed.csv")
 df["datetime"] = pd.to_datetime(df["datetime"])
 df["traj_num"] = df["trajectory_id"].astype(str).str.rsplit("-", n=1).str[-1].astype(int)
 
-df = df.sort_values(["mmsi", "traj_num", "datetime"])
+df = df.sort_values(["gear", "mmsi", "traj_num", "datetime"])
 
 traj_level_feats = []
 
 #first_traj_id = df["trajectory_id"].iloc[0]
 #df = df[df["trajectory_id"] == first_traj_id].copy()
 
-for traj, d in tqdm(df.groupby("trajectory_id", sort=False)):
+for traj, d in tqdm(df.groupby("trajectory_uid", sort=False)):
     d = d.sort_values("datetime")
     dt = d["datetime"].diff().dt.total_seconds()
     d["dt"] = dt
@@ -46,4 +46,4 @@ for traj, d in tqdm(df.groupby("trajectory_id", sort=False)):
     
 
 df_with_feats = pd.concat(traj_level_feats)
-df_with_feats.to_csv("Data/feats_traj_level_longlines.csv")
+df_with_feats.to_csv("Data/feats_traj_level_line_and_trawl.csv", index=False)

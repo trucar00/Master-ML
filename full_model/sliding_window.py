@@ -5,11 +5,11 @@ from tqdm import tqdm
 
 # READY FOR CREATING SEGMENTS
 
-df = pd.read_csv("Data/feats_traj_level_longlines.csv")
+df = pd.read_csv("Data/feats_traj_level_line_and_trawl.csv")
 df["datetime"] = pd.to_datetime(df["datetime"])
 df["traj_num"] = df["trajectory_id"].astype(str).str.rsplit("-", n=1).str[-1].astype(int)
 
-df = df.sort_values(["mmsi", "traj_num", "datetime"])
+df = df.sort_values(["gear", "mmsi", "traj_num", "datetime"])
 
 nr_points = 11
 slide = 5
@@ -22,7 +22,7 @@ no_label = 0
 all_feature_dfs = []
 segment_id = 0  # global counter
 
-for traj, d in tqdm(df.groupby("trajectory_id", sort=False)):
+for traj, d in tqdm(df.groupby("trajectory_uid", sort=False)):
     d = d.sort_values("datetime").reset_index(drop=True)
     start_idx = 0
     end_idx = nr_points
@@ -58,4 +58,4 @@ print(features_all.shape) # fishing + steaming segments * 11
 
 print("Fishing segments: ", fish_segs, " Steaming segs: ", steam_segs, " No label: ", no_label)
 features_all = features_all.drop(columns=["Unnamed: 0"])
-features_all.to_csv("Data/feats_segment_level_longlines.csv", index=False)
+features_all.to_csv("Data/feats_segment_level_line_trawl.csv", index=False)

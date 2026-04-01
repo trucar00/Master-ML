@@ -1,3 +1,5 @@
 .venv/
 Data/
+per_gear/datasets/
+per_gear/*.csv
 __pycache__/

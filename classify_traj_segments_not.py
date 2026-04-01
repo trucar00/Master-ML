@@ -25,7 +25,7 @@ def haversine(lat1, lon1, lat2, lon2):
 
     return dist
 
-PATH = "Data/gear_specific/trawl_clean_downsampled10min.csv"
+PATH = "Data/not_clean_downsampled5min.csv"
 TURN_THRESHOLD = 20  # degrees
 
 df = pd.read_csv(PATH)
@@ -47,7 +47,7 @@ df["segment_id"] = pd.NA
 df["datetime"] = pd.to_datetime(df["datetime"])
 print(df["trajectory_id"].nunique())
 
-window_length = pd.Timedelta(hours=3)
+window_length = pd.Timedelta(hours=1)
 
 for traj_id, idx in tqdm(df.groupby("trajectory_id").groups.items()):
     wind_id = 0

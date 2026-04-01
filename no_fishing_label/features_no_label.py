@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from tqdm import tqdm
 
-df = pd.read_csv("Data/gear_specific/not_clean_downsampled10min.csv")
+df = pd.read_csv("Data/gear_specific/line_clean_downsampled10min.csv")
 df["datetime"] = pd.to_datetime(df["datetime"])
 df["traj_num"] = df["trajectory_id"].astype(str).str.rsplit("-", n=1).str[-1].astype(int)
 
